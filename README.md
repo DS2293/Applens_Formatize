@@ -25,5 +25,4 @@ Run this command in your terminal on a **Mac**:
 **OUTPUT:**
 You will find the file **JiraToApplens.app** inside the **dist** folder.
 
-**IMPORTANT NOTE:**
-The `--windowed` flag is **required** on Mac to create a valid application bundle.
+Note: The --windowed flag is critical for Mac to create a proper application bundle instead of a command-line binary.
