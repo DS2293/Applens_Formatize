@@ -33,7 +33,7 @@ def main():
              sg.FileSaveAs(button_text='Browse Save Location', file_types=(("Excel Files", "*.xlsx"),))]
         ], pad=((0,0),(0,20)), expand_x=True)],
 
-        # Progress Bar (New Addition)
+        # Progress Bar
         [sg.Text('Progress:', font=('Helvetica', 9)), 
          sg.ProgressBar(100, orientation='h', size=(40, 20), key='-PROG-', bar_color=('#4CAF50', '#E0E0E0'), expand_x=True)],
 
@@ -41,7 +41,8 @@ def main():
         [sg.Button('RUN CONVERSION', size=(20, 2), button_color=('white', '#007BFF'), font=('Helvetica', 10, 'bold'), key='-RUN-'),
          sg.Push(),
          sg.Button('Download Log File', size=(15, 2), key='-DOWNLOAD-LOG-'),
-         sg.Button('Exit', size=(10, 2))],
+         # CHANGED: Replaced 'Exit' with 'Clear'
+         sg.Button('Clear', size=(10, 2), key='-CLEAR-')],
 
         # Logs
         [sg.Text('Process Logs:', pad=((0,0),(10,5)))],
@@ -60,15 +61,14 @@ def main():
     while True:
         event, values = window.read()
 
-        if event == sg.WIN_CLOSED or event == 'Exit':
+        if event == sg.WIN_CLOSED:
             break
 
         if event == '-LOG-UPDATE-':
             log_msg = values[event]
             window['-LOG-'].update(log_msg, append=True)
             
-            # PROGRESS BAR LOGIC
-            # We check the log message content to update the bar step-by-step
+            # Progress Bar Logic
             if "Phase 1" in log_msg:
                 window['-PROG-'].update(25)
             elif "Phase 2" in log_msg:
@@ -80,8 +80,9 @@ def main():
             elif "SUCCESS" in log_msg:
                 window['-PROG-'].update(100)
             elif "failed" in log_msg.lower() or "error" in log_msg.lower():
-                window['-PROG-'].update(0) # Reset on error
+                window['-PROG-'].update(0)
 
+        # EVENT: Run Conversion
         if event == '-RUN-':
             input_path = values['-INPUT-']
             output_path = values['-OUTPUT-']
@@ -93,7 +94,6 @@ def main():
                 sg.popup_error("Please specify an output file path.")
                 continue
             
-            # Reset UI for new run
             window['-RUN-'].update(disabled=True, text='Processing...')
             window['-PROG-'].update(0) 
             
@@ -103,10 +103,26 @@ def main():
                 logger.error(f"Failed to start process: {e}")
                 window['-RUN-'].update(disabled=False, text='RUN CONVERSION')
 
+        # EVENT: Thread Finished
         if event == '-THREAD-DONE-':
             window['-RUN-'].update(disabled=False, text='RUN CONVERSION')
             sg.popup("Process Completed!", "Check the logs for details.", title="Success")
 
+        # EVENT: Clear Fields (New Logic)
+        if event == '-CLEAR-':
+            # 1. Clear Input Field
+            window['-INPUT-'].update('')
+            # 2. Reset Output Field to default name
+            window['-OUTPUT-'].update('Applens_Upload_Output.xlsx')
+            # 3. Reset Progress Bar
+            window['-PROG-'].update(0)
+            # 4. Clear Logs (Optional - uncomment if you want logs cleared too)
+            # window['-LOG-'].update('')
+            
+            # 5. Ensure Run button is enabled
+            window['-RUN-'].update(disabled=False, text='RUN CONVERSION')
+
+        # EVENT: Download Logs
         if event == '-DOWNLOAD-LOG-':
             source_log = 'applens_conversion.log'
             if not os.path.exists(source_log):

@@ -2,6 +2,7 @@ build/
 dist/
 JiraApplensAutomationTool.egg-info/
 __pycache__/
+JiraToApplens.spec
 *.pyc
 .env
 .vscode/

@@ -1,27 +1,29 @@
-Build Instructions
+# JIRA TO APPLENS CONVERTER
+## BUILD INSTRUCTIONS
 
-Prerequisites
+### PREREQUISITES
+Before building, ensure you have the build tool installed. Run this command:
+`pip install pyinstaller`
 
-Before building, ensure you have the build tool installed on your system:
+---
 
-pip install pyinstaller
+### 1. CREATE WINDOWS EXECUTABLE (.exe)
+Run this command in your terminal on a **Windows machine**:
 
-1. Create Windows Executable (.exe)
+`python -m PyInstaller --noconsole --onefile --name JiraToApplens main_gui.py`
 
-Run this command in your terminal on a Windows machine:
+**OUTPUT:**
+You will find the file **JiraToApplens.exe** inside the **dist** folder.
 
-python -m PyInstaller --noconsole --onefile --name JiraToApplens main_gui.py
+---
 
-Output:
-You will find JiraToApplens.exe in the dist/ folder.
+### 2. CREATE MAC APPLICATION (.app)
+Run this command in your terminal on a **Mac**:
 
-2. Create Mac Application (.app)
+`python3 -m PyInstaller --noconsole --onefile --windowed --name JiraToApplens main_gui.py`
 
-Run this command in your terminal on a Mac:
+**OUTPUT:**
+You will find the file **JiraToApplens.app** inside the **dist** folder.
 
-python3 -m PyInstaller --noconsole --onefile --windowed --name JiraToApplens main_gui.py
-
-Output:
-You will find JiraToApplens.app in the dist/ folder.
-
-Note: The --windowed flag is critical for Mac to create a proper application bundle instead of a command-line binary.
+**IMPORTANT NOTE:**
+The `--windowed` flag is **required** on Mac to create a valid application bundle.
