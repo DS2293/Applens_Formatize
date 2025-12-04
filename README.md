@@ -1,40 +1,33 @@
 # JIRA AUTOMATION TOOL
 
-# BUILD INSTRUCTIONS
+### BUILD INSTRUCTIONS
 
-## PREREQUISITES
-
-Before building, ensure you have the build tool installed:
-`pip install pyinstaller`
-
-## 1. CREATE WINDOWS EXECUTABLE (.exe)
-
-Run this command in your terminal on a **Windows machine**:
-
-Here is the raw content of the `README.txt` file, including all standard Markdown symbols as requested. You can copy this block directly.
-
-```text
-# JIRA AUTOMATION TOOL
-
-# BUILD INSTRUCTIONS
-
-## PREREQUISITES
+### PREREQUISITES
 
 Before building, ensure you have the build tool installed:
 `pip install pyinstaller`
 
-## 1. CREATE WINDOWS EXECUTABLE (.exe)
+### 1. CREATE WINDOWS EXECUTABLE (.exe)
 
 Run this command in your terminal on a **Windows machine**:
 
-```
+`python -m PyInstaller --noconsole --onefile --name JiraAutomationTool main_gui.py`
 
-python -m PyInstaller --noconsole --onefile --name JiraAutomationTool main\_gui.py
-
-```
 
 **OUTPUT:**
 You will find the file `JiraAutomationTool.exe` inside the `dist` folder.
+
+### 2. CREATE MAC APPLICATION (.app)
+
+Run this command in your terminal on a **Mac**:
+
+`python3 -m PyInstaller --noconsole --onefile --windowed --name JiraAutomationTool main_gui.py`
+
+
+**OUTPUT:**
+You will find the file `JiraAutomationTool.app` inside the `dist` folder.
+
+**IMPORTANT:** The `--windowed` flag is required on Mac to create a valid application bundle.
 
 ## USER GUIDE
 
@@ -51,4 +44,3 @@ You will find the file `JiraAutomationTool.exe` inside the `dist` folder.
 ### 4. Click "RUN CONVERSION".
 
 ### 5. Use "Clear" to reset fields or "Download Log File" to save reports.
-```
