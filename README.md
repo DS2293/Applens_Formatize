@@ -1,28 +1,54 @@
-# JIRA TO APPLENS CONVERTER
-## BUILD INSTRUCTIONS
+# JIRA AUTOMATION TOOL
 
-### PREREQUISITES
-Before building, ensure you have the build tool installed. Run this command:
+# BUILD INSTRUCTIONS
+
+## PREREQUISITES
+
+Before building, ensure you have the build tool installed:
 `pip install pyinstaller`
 
----
+## 1. CREATE WINDOWS EXECUTABLE (.exe)
 
-### 1. CREATE WINDOWS EXECUTABLE (.exe)
 Run this command in your terminal on a **Windows machine**:
 
-`python -m PyInstaller --noconsole --onefile --name JiraToApplens main_gui.py`
+Here is the raw content of the `README.txt` file, including all standard Markdown symbols as requested. You can copy this block directly.
+
+```text
+# JIRA AUTOMATION TOOL
+
+# BUILD INSTRUCTIONS
+
+## PREREQUISITES
+
+Before building, ensure you have the build tool installed:
+`pip install pyinstaller`
+
+## 1. CREATE WINDOWS EXECUTABLE (.exe)
+
+Run this command in your terminal on a **Windows machine**:
+
+```
+
+python -m PyInstaller --noconsole --onefile --name JiraAutomationTool main\_gui.py
+
+```
 
 **OUTPUT:**
-You will find the file **JiraToApplens.exe** inside the **dist** folder.
+You will find the file `JiraAutomationTool.exe` inside the `dist` folder.
 
----
+## USER GUIDE
 
-### 2. CREATE MAC APPLICATION (.app)
-Run this command in your terminal on a **Mac**:
+### 1. Launch the application.
 
-`python3 -m PyInstaller --noconsole --onefile --windowed --name JiraToApplens main_gui.py`
+### 2. Select Conversion Type:
 
-**OUTPUT:**
-You will find the file **JiraToApplens.app** inside the **dist** folder.
+* **"Applens Conversion"**: For standard Ticket ID/Status uploads.
 
-Note: The --windowed flag is critical for Mac to create a proper application bundle instead of a command-line binary.
+* **"MSM Conversion"**: For detailed monthly tower reporting.
+
+### 3. Click "Browse / Upload" to select your Jira CSV file.
+
+### 4. Click "RUN CONVERSION".
+
+### 5. Use "Clear" to reset fields or "Download Log File" to save reports.
+```

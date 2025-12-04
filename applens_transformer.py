@@ -146,7 +146,7 @@ def save_target_file(df: pd.DataFrame, output_path: str) -> bool:
         logger.error(f"Failed to write output file: {e}")
         return False
 
-def run_transformation_pipeline(input_path: str, output_path: str) -> bool:
+def run_applens_transformation_pipeline(input_path: str, output_path: str) -> bool:
     try:
         df = load_source_data(input_path)
         df = apply_transformations(df)
