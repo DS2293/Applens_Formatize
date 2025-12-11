@@ -122,15 +122,21 @@ def validate_and_clean(df: pd.DataFrame) -> pd.DataFrame:
     if len(df) < initial_count:
         logger.warning(f"Dropped {initial_count - len(df)} rows due to missing Ticket IDs.")
 
-    # Standardize dates
-    date_cols = ['Open Date', 'Closed Date']
-    for col in date_cols:
-        if col in df.columns:
-            df[col] = pd.to_datetime(df[col], errors='coerce')
+    # IMPORTANT CHANGE:
+    # Do NOT convert dates to datetime – keep Jira's original string format.
+    # This avoids timezone-aware datetime issues when writing to Excel
+    # and keeps the "default Jira" textual representation.
+    #
+    # (Old code removed):
+    # date_cols = ['Open Date', 'Closed Date']
+    # for col in date_cols:
+    #      if col in df.columns:
+    #          df[col] = pd.to_datetime(df[col], errors='coerce')
 
-    # Handle nulls in Closed Date for visual cleanliness
-    df['Closed Date'] = df['Closed Date'].fillna('')
-    
+    # Handle nulls in Closed Date for visual cleanliness (still as strings)
+    if 'Closed Date' in df.columns:
+        df['Closed Date'] = df['Closed Date'].fillna('')
+
     logger.info("Validation complete.")
     return df
 
@@ -139,6 +145,7 @@ def save_target_file(df: pd.DataFrame, output_path: str) -> bool:
     
     try:
         df_final = df[FINAL_COLUMN_ORDER]
+        # Since we keep dates as strings, there should be no timezone-aware datetimes.
         df_final.to_excel(output_path, index=False)
         logger.info("SUCCESS: Transformation complete.")
         return True
@@ -166,7 +173,7 @@ if __name__ == "__main__":
     
     if os.path.exists(INPUT_FILE):
         print(f"Processing file: {INPUT_FILE}")
-        success = run_transformation_pipeline(INPUT_FILE, OUTPUT_FILE)
+        success = run_applens_transformation_pipeline(INPUT_FILE, OUTPUT_FILE)
         if success:
             print(f"\nSUCCESS! Output saved to: {OUTPUT_FILE}")
         else:
