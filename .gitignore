@@ -33,3 +33,5 @@ pip-wheel-metadata/
 .pytest_cache/
 .spec/
 .ipynb_checkpoints/
+.xlsx
+.csv
