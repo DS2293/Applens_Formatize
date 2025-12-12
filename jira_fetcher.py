@@ -39,8 +39,6 @@ def fetch_jira_issues(base_url, email, api_token, start_date, end_date, output_c
     logger.info(f"Connecting to Jira: {base_url}")
 
     # 2. Build Long JQL Query
-    # We must ensure the dates are in a format JQL accepts (YYYY/MM/DD or YYYY-MM-DD).
-    # Assuming inputs start_date/end_date are already valid strings like '2025-12-01'.
     jql = (
         f"timespent is not null AND worklogAuthor in ({authors}) "
         f"AND worklogDate >= '{start_date}' AND worklogDate <= '{end_date}'"
@@ -142,9 +140,7 @@ def fetch_jira_issues(base_url, email, api_token, start_date, end_date, output_c
         date_cols = ["Updated", "Resolved", "Created"]
         for col in date_cols:
             if col in df.columns:
-                # Force conversion to datetime objects first
                 df[col] = pd.to_datetime(df[col], errors='coerce')
-                # Then remove timezone info safely
                 if pd.api.types.is_datetime64_any_dtype(df[col]):
                     df[col] = df[col].dt.tz_localize(None)
 
