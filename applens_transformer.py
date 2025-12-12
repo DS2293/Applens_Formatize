@@ -7,16 +7,18 @@ from typing import Optional, List, Dict
 
 # Mapping: { Source_Column_In_Jira : Target_Column_In_Applens }
 # Source keys are treated as case-insensitive during read
+
 COLUMN_MAPPING: Dict[str, str] = {
     'Issue Key': 'Ticket ID',
     'Issue Type': 'Ticket Type',
     'Updated': 'Open Date',
     'Status': 'Status',
-    'Resolved': 'Closed Date'
+    'Resolved': 'Closed Date',
+    'Priority': 'Priority'  # ADDED: Read 'Priority' from source
 }
 
 CONSTANTS: Dict[str, str] = {
-    'Priority': 'NONE',
+    # REMOVED: 'Priority': 'NONE' -> We now read it from source
     'Application': 'HMOF',
     'Assignment Group': 'HMH Support Group'
 }
@@ -79,6 +81,8 @@ def load_source_data(file_path: str) -> Optional[pd.DataFrame]:
                 usecols_actual.append(actual_name)
                 normalization_map[actual_name] = required_col
             else:
+                # If a column is missing but we have a constant for it or default logic, maybe warn instead of fail?
+                # But here strict mapping is usually safer.
                 missing_cols.append(required_col)
         
         if missing_cols:
@@ -108,9 +112,17 @@ def apply_transformations(df: pd.DataFrame) -> pd.DataFrame:
     
     df_transformed = df.rename(columns=COLUMN_MAPPING)
     
+    # Apply constants (Application, Assignment Group)
     for col, val in CONSTANTS.items():
         df_transformed[col] = val
         
+    # Optional: Fill empty Priority values with 'NONE' if some rows are missing it
+    if 'Priority' in df_transformed.columns:
+        df_transformed['Priority'] = df_transformed['Priority'].fillna('NONE')
+    else:
+        # Fallback if Priority somehow wasn't read
+        df_transformed['Priority'] = 'NONE'
+
     return df_transformed
 
 def validate_and_clean(df: pd.DataFrame) -> pd.DataFrame:
@@ -121,17 +133,6 @@ def validate_and_clean(df: pd.DataFrame) -> pd.DataFrame:
     df = df.dropna(subset=['Ticket ID'])
     if len(df) < initial_count:
         logger.warning(f"Dropped {initial_count - len(df)} rows due to missing Ticket IDs.")
-
-    # IMPORTANT CHANGE:
-    # Do NOT convert dates to datetime – keep Jira's original string format.
-    # This avoids timezone-aware datetime issues when writing to Excel
-    # and keeps the "default Jira" textual representation.
-    #
-    # (Old code removed):
-    # date_cols = ['Open Date', 'Closed Date']
-    # for col in date_cols:
-    #      if col in df.columns:
-    #          df[col] = pd.to_datetime(df[col], errors='coerce')
 
     # Handle nulls in Closed Date for visual cleanliness (still as strings)
     if 'Closed Date' in df.columns:
@@ -173,7 +174,7 @@ if __name__ == "__main__":
     
     if os.path.exists(INPUT_FILE):
         print(f"Processing file: {INPUT_FILE}")
-        success = run_applens_transformation_pipeline(INPUT_FILE, OUTPUT_FILE)
+        success = run_transformation_pipeline(INPUT_FILE, OUTPUT_FILE)
         if success:
             print(f"\nSUCCESS! Output saved to: {OUTPUT_FILE}")
         else:
