@@ -12,11 +12,7 @@ load_dotenv()
 logger = logging.getLogger("ApplensTransformer")
 
 def fetch_jira_issues(base_url, email, api_token, start_date, end_date, output_csv_path):
-    """
-    Fetch issues from Jira using a POST request to handle long JQL queries.
-    Uses the modern /rest/api/3/search/jql endpoint with cursor-based pagination
-    to avoid 410 errors from the deprecated offset-based API.
-    """
+
     # 1. Validation & Setup
     if not base_url: base_url = os.getenv("JIRA_URL")
     if not email: email = os.getenv("JIRA_EMAIL")
