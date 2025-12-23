@@ -1,5 +1,12 @@
 # JIRA AUTOMATION TOOL
 
+### Creating .env 
+Values to be entered
+1. JIRA_URL= https://nwea.atlassian.net/
+2. JIRA_EMAIL= Your Jira email address
+3. JIRA_API_TOKEN= Your Jira API Token
+4. JIRA_WORKLOG_AUTHORS= WorkLog Authors
+
 ### BUILD INSTRUCTIONS
 
 ### PREREQUISITES

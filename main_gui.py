@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 # Load env variables at start
 load_dotenv()
 
-# Import pipelines
+# Import BOTH pipelines using aliases for clarity
 from applens_transformer import run_applens_transformation_pipeline as run_applens
 from msm_transformer import run_msm_transformation_pipeline as run_msm
 from jira_fetcher import fetch_jira_issues
@@ -36,7 +36,7 @@ def main():
     layout = [
         [sg.Text('Jira Automation Tool', font=('Helvetica', 16), pad=((0,0),(10,20)))],
         
-        # SECTION 1: Conversion Type
+        # SECTION 1: Conversion Type Selection
         [sg.Frame('1. Select Conversion Type', layout=[
             [sg.Radio('Applens Conversion', "RADIO_TYPE", default=True, key='-TYPE-APPLENS-', enable_events=True),
              sg.Radio('MSM Conversion', "RADIO_TYPE", key='-TYPE-MSM-', enable_events=True)]
@@ -56,15 +56,17 @@ def main():
             
             # --- PANEL B: API Credentials & Dates ---
             [sg.Column([
-                # Use the defaults loaded from .env here
                 [sg.Text('Jira URL:', size=(10, 1)), sg.Input(default_text=default_url, key='-API-URL-', expand_x=True)],
                 [sg.Text('Email:', size=(10, 1)), sg.Input(default_text=default_email, key='-API-EMAIL-', expand_x=True)],
                 [sg.Text('API Token:', size=(10, 1)), sg.Input(default_text=default_token, key='-API-TOKEN-', password_char='*', expand_x=True)],
                 [sg.Text('_' * 60)],
+                # Added enable_events=True to date inputs so we catch manual typing
                 [sg.Text('From Date:', size=(10, 1)), 
-                 sg.Input(key='-DATE-FROM-', size=(20,1)), sg.CalendarButton('Select', target='-DATE-FROM-', format='%Y-%m-%d')],
+                 sg.Input(key='-DATE-FROM-', size=(20,1), enable_events=True), 
+                 sg.CalendarButton('Select', target='-DATE-FROM-', format='%Y-%m-%d')],
                 [sg.Text('To Date:', size=(10, 1)), 
-                 sg.Input(key='-DATE-TO-', size=(20,1)), sg.CalendarButton('Select', target='-DATE-TO-', format='%Y-%m-%d')]
+                 sg.Input(key='-DATE-TO-', size=(20,1), enable_events=True), 
+                 sg.CalendarButton('Select', target='-DATE-TO-', format='%Y-%m-%d')]
             ], key='-PANEL-API-', visible=False, expand_x=True)]
             
         ], pad=((0,0),(0,20)), expand_x=True)],
@@ -96,6 +98,28 @@ def main():
     gui_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
     logger.addHandler(gui_handler)
 
+    def update_output_filename(values):
+        """Helper to dynamically construct the output filename based on dates and type."""
+        start_date = values['-DATE-FROM-']
+        end_date = values['-DATE-TO-']
+        is_msm = values['-TYPE-MSM-']
+        
+        # Determine base suffix based on conversion type
+        suffix = "MSM_Upload_Output.xlsx" if is_msm else "Applens_Upload_Output.xlsx"
+        
+        # If dates are present, prepend them
+        if start_date and end_date:
+            # Format: YYYY-MM-DD_YYYY-MM-DD_Type_Upload_Output.xlsx
+            # Replacing invalid filename chars just in case user typed slashes
+            s_clean = start_date.replace('/', '-').replace('\\', '-')
+            e_clean = end_date.replace('/', '-').replace('\\', '-')
+            new_name = f"{s_clean}_to_{e_clean}_{suffix}"
+        else:
+            # Fallback if no dates
+            new_name = suffix
+            
+        window['-OUTPUT-'].update(new_name)
+
     while True:
         event, values = window.read()
 
@@ -111,11 +135,12 @@ def main():
             window['-PANEL-FILE-'].update(visible=False)
             window['-PANEL-API-'].update(visible=True)
 
-        # Output Filename Logic
-        if event == '-TYPE-MSM-' and 'Applens' in values['-OUTPUT-']:
-            window['-OUTPUT-'].update('MSM_Upload_Output.xlsx')
-        if event == '-TYPE-APPLENS-' and 'MSM' in values['-OUTPUT-']:
-            window['-OUTPUT-'].update('Applens_Upload_Output.xlsx')
+        # EVENT: Auto-Update Output Filename based on Radio Selection OR Dates
+        if event in ('-TYPE-MSM-', '-TYPE-APPLENS-', '-DATE-FROM-', '-DATE-TO-'):
+            # Only update filename automatically if we are in API mode (since dates matter there)
+            # OR if the user is just switching types.
+            if values['-SRC-API-'] or event in ('-TYPE-MSM-', '-TYPE-APPLENS-'):
+                update_output_filename(values)
 
         if event == '-LOG-UPDATE-':
             log_msg = values[event]
@@ -127,13 +152,10 @@ def main():
             elif "failed" in log_msg.lower(): window['-PROG-'].update(0)
 
         if event == '-RUN-':
-            # Gather common inputs
             output_path = values['-OUTPUT-']
             is_msm = values['-TYPE-MSM-']
             
-            # Determine logic based on Source
             if values['-SRC-FILE-']:
-                # Logic A: File Upload
                 input_file = values['-INPUT-FILE-']
                 if not input_file:
                     sg.popup_error("Please select a CSV file.")
@@ -144,7 +166,6 @@ def main():
                 threading.Thread(target=run_wrapper_file, args=(input_file, output_path, is_msm, window), daemon=True).start()
                 
             else:
-                # Logic B: Jira API Fetch
                 api_url = values['-API-URL-']
                 api_email = values['-API-EMAIL-']
                 api_token = values['-API-TOKEN-']
@@ -164,13 +185,16 @@ def main():
             sg.popup("Process Completed!", "Check logs for details.", title="Success")
 
         if event == '-CLEAR-':
-            # Clear all fields but KEEP CREDENTIALS (from .env)
             for key in ['-INPUT-FILE-', '-DATE-FROM-', '-DATE-TO-']:
                 window[key].update('')
-            # Optionally reset credentials to defaults from env
             window['-API-URL-'].update(default_url)
             window['-API-EMAIL-'].update(default_email)
             window['-API-TOKEN-'].update(default_token)
+            
+            # Reset output name to default without dates
+            default_out = 'MSM_Upload_Output.xlsx' if values['-TYPE-MSM-'] else 'Applens_Upload_Output.xlsx'
+            window['-OUTPUT-'].update(default_out)
+            
             window['-PROG-'].update(0)
         
         if event == '-DOWNLOAD-LOG-':
@@ -189,16 +213,12 @@ def run_wrapper_file(input_path, output_path, is_msm, window):
     window.write_event_value('-THREAD-DONE-', '')
 
 def run_wrapper_api(url, email, token, start, end, output_path, is_msm, window):
-    # 1. Fetch Data
     temp_csv = "Jira_API_Dump.csv"
     success = fetch_jira_issues(url, email, token, start, end, temp_csv)
     
     if success:
-        # 2. Run Transformation on the fetched CSV
         if is_msm: run_msm(temp_csv, output_path)
         else: run_applens(temp_csv, output_path)
-        
-        # Cleanup
         if os.path.exists(temp_csv):
             os.remove(temp_csv)
             
